@@ -1,0 +1,61 @@
+import numpy as np
+import pandas as pd
+from sklearn.metrics import r2_score,mean_absolute_error,mean_squared_error
+import warnings
+from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
+
+data=pd.read_csv()
+
+col=data.columns.values.tolist()
+col1=col[:-1]                      
+col2=col[-1]                       
+X=np.array(data[col1])             
+y=np.array(data[col2])             
+
+from sklearn.model_selection import train_test_split  
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=60) 
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()  
+scaler = scaler.fit()
+X_train = scaler.transform()
+X_test = scaler.transform()
+
+from sklearn.ensemble import RandomForestRegressor 
+#from sklearn.tree import DecisionTreeRegressor 
+#from xgboost import XGBRegressor 
+#from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.model_selection import cross_val_score 
+et_reg=RandomForestRegressor()
+#et_reg=DecisionTreeRegressor ()
+#et_reg=XGBRegressor ()
+#et_reg=ExtraTreesRegressor ()
+
+scores=cross_val_score(et_reg,X_train,y_train,cv=10)
+score=np.mean(scores)
+score
+
+from sklearn.model_selection import GridSearchCV
+param_grid = {}
+et_reg= RandomForestRegressor()
+GS = GridSearchCV(et_reg,param_grid,cv=10)
+GS.fit(X_train,y_train)
+GS.best_params_
+GS.best_score_
+
+et_reg.fit(X_train,y_train)
+y_test_predict =et_reg.predict(X_test)
+y_train_predict =et_reg.predict(X_train)
+print('train R-squared value of ERT is',r2_score(y_train,y_train_predict)) 
+print('R-squared value of ERT is',et_reg.score(X_test,y_test))
+print('the MSEP of ERT is',mean_squared_error(y_train,y_train_predict))
+print('the MSE of ERT is',mean_squared_error(y_test,y_test_predict)) 
+print('the MAEP of ERT is',mean_absolute_error(y_train,y_train_predict))
+print('the MAE of ERT is',mean_absolute_error(y_test,y_test_predict))
+
+import shap
+explainer=shap.TreeExplainer(et_reg)
+shap_values=explainer.shap_values()
+y_base=explainer.expected_value
+shap.summary_plot()
